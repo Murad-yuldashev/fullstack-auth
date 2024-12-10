@@ -1,4 +1,4 @@
-require('dotenv').config
+require('dotenv').config()
 
 const express = require('express');
 const cors = require('cors');
@@ -40,13 +40,16 @@ app.use(erorrHandlerMiddleware)
 app.use('/api/auth', require('./routes/api/auth'));
 
 app.all('*', (req, res) => {
-    res.status(404)
+    // res.status(404)
 
     if(req.accepts('json')) {
         res.json({"error": "404 Not Found"})
     } else {
-        res.type('text').send('404 Not Found');
+        res.type('text').send('404 Not Found DATA');
     }
 })
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+mongoose.connection.once('open', () => {
+    console.log('DB connected')
+    app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+})
