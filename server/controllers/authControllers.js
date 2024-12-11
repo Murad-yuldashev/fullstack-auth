@@ -16,7 +16,7 @@ async function register(req, res) {
     try {
         hashedPassword = await bcrypt.hash(password, 10);
 
-        await User.create({email, username, first_name, last_name, password: hashedPassword});
+        await User.create({email, username, first_name, last_name, password: hashedPassword}).exec();
 
         return res.sendStatus(201)
     } catch (error) {
@@ -38,13 +38,13 @@ async function login(req, res) {
     if(!match) return res.status(401).json({message: "Email or password incorrect"})
 
     const accessToken = jwt.sign(
-        {username: user.username},
+        {id: user.id},
         process.env.ACCESS_TOKEN_SECRET,
         {expiresIn: '1800s'}
     );
 
     const refreshToken = jwt.sign(
-        {username: user.username},
+        {id: user.id},
         process.env.REFRESH_TOKEN_SECRET,
         {expiresIn: '1d'}
     );
@@ -62,15 +62,44 @@ async function logout(req, res) {
     if(!cookies.refresh_token) return res.sendStatus(204);
 
     const refreshToken = cookies.refresh_token;
-    const user = await User.findOne({refresh_token: refreshToken})
+    const user = await User.findOne({refresh_token: refreshToken}).exec()
 
     if(!user) {
-        res.clearCookie(('refresh_token', {httpOnly: true, sameSite: 'None', secure: true}))
+        res.clearCookie('refresh_token', {httpOnly: true})
+        return res.sendStatus(204)
     }
+
+    user.refresh_token = null;
+    await user.save()
+
+    res.clearCookie('refresh_token', {httpOnly: true})
+    res.sendStatus(204)
 }
 
 async function refresh(req, res) {
-    res.sendStatus(200)
+    const cookies = req.cookies
+    if(!cookies.refresh_token) return res.sendStatus(401);
+
+    const refreshToken = cookies.refresh_token;
+
+    const user = await User.findOne({refresh_token: refreshToken}).exec();
+    if(!user) return res.sendStatus(403);
+
+    jwt.verify(
+        refreshToken,
+        process.env.REFRESH_TOKEN_SECRET,
+        (err, decoded) => {
+            if(err || user.id !== decoded.id) return res.sendStatus(403)
+
+            const accessToken = jwt.sign(
+                {id: decoded.id},
+                process.env.ACCESS_TOKEN_SECRET,
+                {expiresIn: '1800s'}
+            )
+
+            res.json({access_token: accessToken})
+        }
+    )
 }
 
 async function user(req, res) {
