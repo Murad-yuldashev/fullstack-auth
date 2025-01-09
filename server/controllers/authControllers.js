@@ -18,10 +18,13 @@ async function register(req, res) {
 
         await User.create({email, username, first_name, last_name, password: hashedPassword});
 
+
         return res.sendStatus(201)
     } catch (error) {
         return res.status(400).json({message: "Could not register"})
     }
+
+
 }
 
 async function login(req, res) {
