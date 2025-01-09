@@ -11,12 +11,12 @@ async function register(req, res) {
 
     const userExists = await User.exists({email}).exec()
 
-    if(userExists) return res.status(409)
+    if(userExists) return res.sendStatus(409)
 
     try {
         hashedPassword = await bcrypt.hash(password, 10);
 
-        await User.create({email, username, first_name, last_name, password: hashedPassword}).exec();
+        await User.create({email, username, first_name, last_name, password: hashedPassword});
 
         return res.sendStatus(201)
     } catch (error) {
@@ -89,7 +89,7 @@ async function refresh(req, res) {
         refreshToken,
         process.env.REFRESH_TOKEN_SECRET,
         (err, decoded) => {
-            if(err || user.id !== decoded.id) return res.sendStatus(403)
+            if(err || user?.id !== decoded.id) return res.sendStatus(403)
 
             const accessToken = jwt.sign(
                 {id: decoded.id},
@@ -103,7 +103,8 @@ async function refresh(req, res) {
 }
 
 async function user(req, res) {
-    res.sendStatus(200)
+    const user = req.user
+    return res.status(200).json(user)
 }
 
 module.exports = {register, login, logout, refresh, user};

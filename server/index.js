@@ -14,6 +14,16 @@ const app = express();
 const PORT = 3080;
 
 connectDB()
+    .then(() => {
+        mongoose.connection.once('open', () => {
+            console.log('DB connected');
+            app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+        });
+    })
+    .catch(error => {
+        console.error('Failed to connect to DB:', error);
+        process.exit(1); // Jarayonni to'xtatish
+    });
 
 // Allowed credentials
 app.use(credentisls)
