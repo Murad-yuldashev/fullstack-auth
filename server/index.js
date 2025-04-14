@@ -11,7 +11,7 @@ const credentisls = require('./middleware/credentials');
 const erorrHandlerMiddleware = require('./middleware/error_handler');
 
 const app = express();
-const PORT = 3080;
+const PORT = 5173;
 
 connectDB()
     .then(() => {

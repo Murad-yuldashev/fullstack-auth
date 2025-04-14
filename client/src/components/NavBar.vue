@@ -1,3 +1,26 @@
+<script setup lang="ts">
+import { useAuthStore } from '@/stores/auth.ts'
+import { computed } from 'vue'
+import type { State, User } from '@/types'
+import { useRouter } from 'vue-router'
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+const user = computed<User | any>(() => authStore.user);
+const isAuthenticated = computed<State | any>(() => authStore.isAuthenticated);
+
+const logout = async () => {
+  try {
+    await authStore.logout();
+    // Redirect to login page or home page
+    router.replace({ name: 'Login' });
+  } catch (error: Error | any) {
+    console.error(error);
+  }
+}
+</script>
+
 <template>
   <nav class="navbar navbar-expand-lg bg-light">
     <div class="container-fluid">
@@ -12,22 +35,25 @@
           </li>
         </ul>
         <ul class="navbar-nav mb-2 mb-lg-0">
-          <li  class="nav-item dropdown">
+          <li v-if="isAuthenticated" class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              User
+              {{ user?.username }}
             </a>
             <ul class="dropdown-menu">
               <li><router-link :to="{name: 'User'}" class="dropdown-item">Profile</router-link></li>
               <li><hr class="dropdown-divider"></li>
-              <li><button class="dropdown-item btn btn-danger">Logout</button></li>
+              <li><button @click="logout" class="dropdown-item btn btn-danger">Logout</button></li>
             </ul>
           </li>
-          <li class="nav-item">
-            <router-link :to="{name: 'Login'}" class="nav-link" aria-current="page">Login</router-link>
-          </li>
-          <li class="nav-item">
-            <router-link :to="{name: 'Register'}" class="nav-link" aria-current="page">Register</router-link>
-          </li>
+
+          <template v-else>
+            <li class="nav-item">
+              <router-link :to="{name: 'Login'}" class="nav-link" aria-current="page">Login</router-link>
+            </li>
+            <li class="nav-item">
+              <router-link :to="{name: 'Register'}" class="nav-link" aria-current="page">Register</router-link>
+            </li>
+          </template>
 
         </ul>
       </div>
@@ -35,6 +61,10 @@
   </nav>
 </template>
 
-<script setup lang="ts">
 
-</script>
+<style scoped>
+
+.dropdown-menu {
+  left: -130px !important;
+}
+</style>
